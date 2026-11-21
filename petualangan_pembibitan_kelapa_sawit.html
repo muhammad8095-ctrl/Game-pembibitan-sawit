@@ -1,0 +1,1816 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Petualangan Pembibitan Kelapa Sawit - SMK ATP Kelas XI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            cursor: default;
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #14532d;
+            color: #f8fafc;
+        }
+        button, [role="button"] {
+            cursor: pointer !important;
+        }
+        input {
+            cursor: text !important;
+            user-select: text;
+            -webkit-user-select: text;
+        }
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 12px rgba(250, 204, 21, 0.45); }
+            50% { box-shadow: 0 0 24px rgba(250, 204, 21, 0.9); }
+        }
+        .pulse-btn {
+            animation: pulseGlow 2s infinite;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col">
+
+    <!-- ======================== LAYAR PEMBUKA ======================== -->
+    <div id="startScreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gradient-to-br from-emerald-950 via-green-900 to-amber-950">
+        <div class="max-w-lg w-full bg-slate-900/95 border-2 border-amber-400/50 rounded-3xl p-6 sm:p-8 shadow-2xl text-center">
+            <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-amber-500/20 border-2 border-amber-400 mb-3 text-5xl">
+                🌴
+            </div>
+            <span class="inline-block px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold tracking-wider uppercase mb-2">
+                Media Pembelajaran Interaktif • Gamifikasi SMK ATP Kelas XI
+            </span>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white mb-2 leading-tight">
+                Petualangan Pembibitan Kelapa Sawit
+            </h1>
+            <p class="text-slate-300 text-xs sm:text-sm mb-4 leading-relaxed">
+                Simulasi <b>Game-Based Learning</b> bergaya <i>Harvest Moon</i>! Berperanlah sebagai siswa PKL mengelola kecambah unggul, <b>Pre-Nursery</b>, hingga <b>Main Nursery</b> demi investasi panen 25 tahun.
+            </p>
+
+            <!-- Menu Navigasi Standar Lomba MPI -->
+            <div class="grid grid-cols-3 gap-2 mb-4">
+                <button type="button" onclick="openMPIModal('cp')" class="py-2 px-2.5 rounded-xl bg-slate-800 hover:bg-emerald-900/60 border border-slate-600 hover:border-emerald-400 text-emerald-300 font-bold text-xs flex flex-col items-center gap-1 transition">
+                    <span class="text-base">🎯</span>
+                    <span>CP & Tujuan</span>
+                </button>
+                <button type="button" onclick="openMPIModal('guide')" class="py-2 px-2.5 rounded-xl bg-slate-800 hover:bg-amber-900/60 border border-slate-600 hover:border-amber-400 text-amber-300 font-bold text-xs flex flex-col items-center gap-1 transition">
+                    <span class="text-base">🎮</span>
+                    <span>Petunjuk</span>
+                </button>
+                <button type="button" onclick="openMPIModal('profile')" class="py-2 px-2.5 rounded-xl bg-slate-800 hover:bg-sky-900/60 border border-slate-600 hover:border-sky-400 text-sky-300 font-bold text-xs flex flex-col items-center gap-1 transition">
+                    <span class="text-base">👨‍🏫</span>
+                    <span>Profil MPI</span>
+                </button>
+            </div>
+
+            <div class="mb-4 text-left">
+                <label class="block text-xs font-bold text-amber-300 uppercase mb-1.5">Nama Siswa PKL:</label>
+                <input id="playerNameInput" type="text" maxlength="20" placeholder="Ketik namamu (misal: Andi ATP)..." 
+                    class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-600 text-white placeholder-slate-400 focus:outline-none focus:border-amber-400 font-semibold text-sm">
+            </div>
+
+            <button type="button" onclick="startGame()" class="pulse-btn w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 font-extrabold text-base shadow-lg transition transform active:scale-95">
+                🚜 Mulai PKL di Pembibitan
+            </button>
+
+            <p class="text-[11px] text-slate-400 mt-3">
+                Kontrol Laptop: <b>Klik langsung tanah/objek</b> atau <b>WASD / Panah + Spasi</b> • HP: <b>Sentuh Layar</b>
+            </p>
+        </div>
+    </div>
+
+    <!-- ======================== MODAL INFO LOMBA MPI (CP/TP, PETUNJUK, PROFIL) ======================== -->
+    <div id="mpiInfoModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
+        <div class="max-w-lg w-full bg-slate-900 border-2 border-amber-400 rounded-3xl p-6 shadow-2xl">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-700">
+                <h3 id="mpiModalTitle" class="text-base sm:text-lg font-extrabold text-amber-300">Capaian Pembelajaran</h3>
+                <button type="button" onclick="closeMPIModal()" class="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-sm">✕</button>
+            </div>
+            <div id="mpiModalBody" class="py-4 text-xs sm:text-sm text-slate-200 space-y-3 leading-relaxed max-h-[65vh] overflow-y-auto"></div>
+            <div class="pt-2 text-right">
+                <button type="button" onclick="closeMPIModal()" class="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs sm:text-sm">Mengerti</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================== MODAL MINI-GAME SELEKSI KECAMBAH ======================== -->
+    <div id="seedSortModal" class="hidden fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/80">
+        <div class="max-w-lg w-full bg-slate-900 border-2 border-emerald-400 rounded-3xl p-6 shadow-2xl">
+            <div class="flex items-center justify-between mb-3">
+                <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold">
+                    Seleksi Kecambah Unggul (DxP)
+                </span>
+                <span id="seedCounter" class="text-xs font-bold text-amber-300">Sampel 1 / 4</span>
+            </div>
+            <h3 class="text-lg font-extrabold text-white mb-2">Periksa Morfologi Kecambah Ini:</h3>
+
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 mb-4 flex flex-col items-center text-center">
+                <div id="seedVisual" class="text-6xl mb-3">🌱</div>
+                <h4 id="seedTitle" class="font-bold text-amber-300 text-base mb-1">Kecambah Sampel A</h4>
+                <p id="seedDesc" class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                    Radikula (calon akar) dan plumula (calon batang) tumbuh lurus berlawanan arah (180°), berwarna putih gading segar.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <button type="button" onclick="judgeSeed(true)" class="py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm flex flex-col items-center gap-1 transition active:scale-95">
+                    <span>✅ Tanam ke Baby Polybag</span>
+                    <span class="text-[11px] font-normal text-emerald-100">Kecambah Normal</span>
+                </button>
+                <button type="button" onclick="judgeSeed(false)" class="py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm flex flex-col items-center gap-1 transition active:scale-95">
+                    <span>🗑️ Afkir / Musnahkan</span>
+                    <span class="text-[11px] font-normal text-rose-100">Kecambah Abnormal</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================== MODAL EVALUASI UJI KOMPETENSI ======================== -->
+    <div id="quizModal" class="hidden fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/80">
+        <div class="max-w-lg w-full bg-slate-900 border-2 border-amber-400 rounded-3xl p-6 shadow-2xl">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-extrabold uppercase text-amber-300">📋 Uji Kelayakan Bibit Siap Salur</span>
+                <span id="quizProgress" class="text-xs text-slate-400 font-bold">Soal 1/3</span>
+            </div>
+            <h3 id="quizQuestion" class="text-base sm:text-lg font-bold text-white mb-4 leading-snug">
+                Pertanyaan SOP...
+            </h3>
+            <div id="quizOptions" class="space-y-2.5"></div>
+        </div>
+    </div>
+
+    <!-- ======================== MODAL JURNAL SOP ======================== -->
+    <div id="sopModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
+        <div class="max-w-2xl w-full max-h-[85vh] flex flex-col bg-slate-900 border-2 border-amber-400/60 rounded-3xl p-6 shadow-2xl">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-700">
+                <h3 class="text-lg font-extrabold text-amber-300 flex items-center gap-2">
+                    <span>📖</span> Buku Jurnal SOP Pembibitan Kelapa Sawit
+                </h3>
+                <button type="button" onclick="toggleSOPModal(false)" class="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-sm">✕</button>
+            </div>
+            <div class="overflow-y-auto py-4 space-y-4 text-xs sm:text-sm text-slate-200 leading-relaxed">
+                <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700">
+                    <h4 class="font-bold text-emerald-400 mb-1">1. Seleksi Kecambah Unggul (DxP)</h4>
+                    <p>Kecambah normal memiliki <b>radikula</b> (calon akar) dan <b>plumula</b> (calon batang) yang tumbuh lurus berlawanan arah (180°), berwarna putih gading segar, dan bebas jamur. Kecambah yang bengkok, tumbuh searah, patah, atau berjamur wajib <b>diafkir</b>.</p>
+                </div>
+                <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700">
+                    <h4 class="font-bold text-emerald-400 mb-1">2. Pre-Nursery (Pembibitan Awal: Umur 0–3 Bulan)</h4>
+                    <p>Menggunakan <i>baby polybag</i> hitam (15 × 23 cm) berisi tanah lapisan atas (<i>topsoil</i>) yang diayak. Wajib diberi <b>naungan paranet (50–60%)</b> untuk melindungi bibit muda dari sengatan matahari langsung dan terpaan hujan deras.</p>
+                </div>
+                <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700">
+                    <h4 class="font-bold text-emerald-400 mb-1">3. Main Nursery (Pembibitan Utama: Umur 3–12 Bulan)</h4>
+                    <p>Bibit dipindah (<i>transplanting</i>) ke <i>large polybag</i> (40 × 50 cm) dengan jarak tanam <b>segitiga sama sisi 90 × 90 × 90 cm</b>. Pemupukan NPK dilakukan berkala, serangan bercak daun (<i>Curvularia sp.</i>) dikendalikan dengan penyemprotan fungisida, dan bibit kerdil (<i>stunted</i>) atau pucuk terpelintir (<i>twisted shoot</i>) harus diseleksi ketat (<i>culling</i>).</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================== HUD ATAS GAME ======================== -->
+    <header id="gameHUD" class="hidden z-20 bg-slate-950/95 border-b border-emerald-700/60 px-3 py-2 flex flex-wrap items-center justify-between gap-2 shadow-lg">
+        <div class="flex items-center gap-2">
+            <span class="text-xl">🌴</span>
+            <div>
+                <div class="flex items-center gap-1.5">
+                    <span id="hudStage" class="text-xs sm:text-sm font-extrabold text-amber-300">Babak 1: Seleksi Kecambah</span>
+                    <span id="hudMonth" class="px-2 py-0.5 rounded-full bg-emerald-600/30 border border-emerald-400/50 text-[10px] font-bold text-emerald-300">Bulan ke-0</span>
+                </div>
+                <div class="flex items-center gap-2 text-[11px] text-slate-300">
+                    <span id="hudWeatherIcon">☀️</span>
+                    <span id="hudTimeText">Hari ke-1 • 07:30 Pagi</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bar Mutu Bibit & Stamina -->
+        <div class="flex items-center gap-3">
+            <div class="w-24 sm:w-32">
+                <div class="flex justify-between text-[10px] font-bold mb-0.5">
+                    <span class="text-slate-300">Mutu Bibit</span>
+                    <span id="hudQualityText" class="text-emerald-400">100%</span>
+                </div>
+                <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
+                    <div id="hudQualityBar" class="h-full bg-emerald-400 transition-all duration-300" style="width: 100%"></div>
+                </div>
+            </div>
+
+            <div class="w-24 sm:w-28">
+                <div class="flex justify-between text-[10px] font-bold mb-0.5">
+                    <span class="text-slate-300">Stamina</span>
+                    <span id="hudStaminaText" class="text-sky-400">100%</span>
+                </div>
+                <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
+                    <div id="hudStaminaBar" class="h-full bg-sky-400 transition-all duration-300" style="width: 100%"></div>
+                </div>
+            </div>
+
+            <button type="button" onclick="toggleSOPModal(true)" class="px-2.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/60 text-amber-300 text-xs font-bold flex items-center gap-1">
+                <span>📖</span><span class="hidden sm:inline">Jurnal SOP</span>
+            </button>
+            <button type="button" id="muteBtn" onclick="toggleAudio()" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-xs font-bold">
+                🔊
+            </button>
+        </div>
+    </header>
+
+    <!-- ======================== BANNER MISI AKTIF ======================== -->
+    <div id="questBanner" class="hidden z-20 bg-emerald-950/95 border-b border-emerald-600/50 px-3 py-1.5 flex items-center justify-between gap-2 text-xs">
+        <div class="flex items-center gap-2 truncate">
+            <span class="px-2 py-0.5 rounded bg-amber-400 text-slate-950 font-extrabold text-[10px] uppercase shrink-0">Misi PKL</span>
+            <span id="questText" class="text-emerald-100 font-semibold truncate">Temui Pak Budi untuk memulai praktik.</span>
+        </div>
+        <span id="questProgressBadge" class="px-2.5 py-0.5 rounded-full bg-slate-900 border border-emerald-400/50 text-amber-300 font-extrabold text-[11px] shrink-0">0/4</span>
+    </div>
+
+    <!-- ======================== AREA KANVAS UTAMA GAME ======================== -->
+    <main class="relative flex-1 w-full overflow-hidden">
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- Notifikasi Toast Umpan Balik Agronomis -->
+        <div id="feedbackToast" class="hidden absolute top-3 left-1/2 -translate-x-1/2 z-30 max-w-md w-[92%] bg-slate-900/95 border-2 border-emerald-400 rounded-2xl px-4 py-3 shadow-2xl flex items-start gap-3">
+            <span id="toastIcon" class="text-2xl shrink-0">✅</span>
+            <div>
+                <h4 id="toastTitle" class="text-xs sm:text-sm font-extrabold text-emerald-300">Judul Umpan Balik</h4>
+                <p id="toastMsg" class="text-[11px] sm:text-xs text-slate-200 leading-snug mt-0.5">Penjelasan SOP...</p>
+            </div>
+        </div>
+
+        <!-- Ransel Alat (Inventory) Bawah -->
+        <div id="toolSelector" class="hidden absolute bottom-3 left-1/2 -translate-x-1/2 z-20 bg-slate-950/90 border border-slate-700 rounded-2xl p-1.5 flex items-center gap-1.5 shadow-xl">
+            <button type="button" onclick="selectTool('water')" id="tool-water" class="tool-btn px-2.5 py-2 rounded-xl bg-sky-600 text-white text-xs font-bold flex flex-col items-center gap-0.5 border-2 border-white">
+                <span>💧</span><span class="text-[10px]">Gembor</span>
+            </button>
+            <button type="button" onclick="selectTool('weed')" id="tool-weed" class="tool-btn px-2.5 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold flex flex-col items-center gap-0.5 border-2 border-transparent">
+                <span>🌿</span><span class="text-[10px]">Siang</span>
+            </button>
+            <button type="button" onclick="selectTool('fertilizer')" id="tool-fertilizer" class="tool-btn px-2.5 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold flex flex-col items-center gap-0.5 border-2 border-transparent">
+                <span>🧪</span><span class="text-[10px]">Pupuk</span>
+            </button>
+            <button type="button" onclick="selectTool('spray')" id="tool-spray" class="tool-btn hidden px-2.5 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold flex flex-col items-center gap-0.5 border-2 border-transparent">
+                <span>🧴</span><span class="text-[10px]">Semprot</span>
+            </button>
+            <button type="button" onclick="selectTool('inspect')" id="tool-inspect" class="tool-btn hidden px-2.5 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold flex flex-col items-center gap-0.5 border-2 border-transparent">
+                <span>🔍</span><span class="text-[10px]">Afkir</span>
+            </button>
+        </div>
+
+        <!-- Kontrol Sentuh Layar (HP/Tablet) -->
+        <div id="mobileControls" class="hidden md:hidden absolute bottom-20 inset-x-3 z-20 flex items-end justify-between pointer-events-none">
+            <div class="grid grid-cols-3 gap-1.5 pointer-events-auto">
+                <div></div>
+                <button type="button" id="btnUp" class="w-11 h-11 rounded-xl bg-slate-900/80 border border-slate-600 text-white font-bold active:bg-emerald-600">▲</button>
+                <div></div>
+                <button type="button" id="btnLeft" class="w-11 h-11 rounded-xl bg-slate-900/80 border border-slate-600 text-white font-bold active:bg-emerald-600">◀</button>
+                <button type="button" id="btnDown" class="w-11 h-11 rounded-xl bg-slate-900/80 border border-slate-600 text-white font-bold active:bg-emerald-600">▼</button>
+                <button type="button" id="btnRight" class="w-11 h-11 rounded-xl bg-slate-900/80 border border-slate-600 text-white font-bold active:bg-emerald-600">▶</button>
+            </div>
+            <button type="button" onclick="triggerAction()" class="pointer-events-auto px-4 py-3 rounded-2xl bg-amber-400 text-slate-950 font-extrabold text-xs shadow-lg active:scale-95">
+                ⚡ <span id="actionBtnLabel">Interaksi</span>
+            </button>
+        </div>
+    </main>
+
+    <!-- ======================== MODAL DIALOG MANDOR (PAK BUDI) ======================== -->
+    <div id="dialogModal" class="hidden fixed inset-0 z-40 flex items-end sm:items-center justify-center p-4 bg-black/70">
+        <div class="max-w-lg w-full bg-slate-900 border-2 border-amber-400 rounded-3xl p-5 sm:p-6 shadow-2xl">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-400 flex items-center justify-center text-2xl shrink-0">
+                    👨‍🌾
+                </div>
+                <div>
+                    <span class="text-[10px] font-extrabold uppercase tracking-wider text-amber-300">Mandor Pembibitan</span>
+                    <h3 class="text-base font-extrabold text-white">Pak Budi (Asisten Afdeling Pembibitan)</h3>
+                </div>
+            </div>
+            <p id="dialogText" class="text-xs sm:text-sm text-slate-200 leading-relaxed mb-4">
+                Halo siswa PKL! Mari kita mulai praktik pembibitan kelapa sawit.
+            </p>
+            <div id="dialogActions" class="flex justify-end gap-2"></div>
+        </div>
+    </div>
+
+    <!-- ======================== LAYAR RAPOR KELULUSAN PKL ======================== -->
+    <div id="resultModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-900">
+        <div class="max-w-lg w-full bg-slate-900 border-2 border-amber-400 rounded-3xl p-6 sm:p-8 shadow-2xl text-center">
+            <div class="text-5xl mb-2">🏆</div>
+            <span class="text-xs font-extrabold uppercase tracking-wider text-amber-300">Sertifikat Evaluasi Praktik Kerja Lapangan</span>
+            <h2 id="resultTitle" class="text-2xl font-extrabold text-white mt-1 mb-1">Agronom Muda Terbaik!</h2>
+            <p id="resultStudentName" class="text-sm text-emerald-300 font-semibold mb-4">Siswa ATP Kelas XI</p>
+
+            <div class="bg-slate-800 rounded-2xl p-4 mb-5 border border-slate-700">
+                <div class="text-xs text-slate-400 uppercase font-bold">Indeks Kualitas Bibit Siap Salur</div>
+                <div id="resultScore" class="text-4xl font-extrabold text-emerald-400 my-1">95%</div>
+                <p id="resultFeedback" class="text-xs text-slate-300 leading-relaxed mt-2">
+                    Luar biasa! Bibit kelapa sawit yang kamu rawat memiliki vigor tinggi dan siap menghasilkan tandan buah segar optimal selama 25 tahun ke depan.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <button type="button" onclick="downloadCertificate()" class="py-3 px-4 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-sm transition flex items-center justify-center gap-1.5">
+                    <span>📥</span> Unduh Sertifikat (PNG)
+                </button>
+                <button type="button" onclick="location.reload()" class="py-3 px-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm transition flex items-center justify-center gap-1.5">
+                    <span>🔄</span> Mainkan Ulang
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================== LOGIKA UTAMA GAME ======================== -->
+    <script>
+        /* =========================================================================
+           0. KONTEN STANDAR LOMBA MPI (CP/TP, PETUNJUK, PROFIL PENGEMBANG)
+           ========================================================================= */
+        const MPI_SECTIONS = {
+            cp: {
+                title: "🎯 Capaian & Tujuan Pembelajaran (Kurikulum Merdeka)",
+                html: `
+                    <div class="bg-slate-800/90 p-3.5 rounded-2xl border border-emerald-500/30">
+                        <div class="text-xs font-bold text-emerald-400 uppercase mb-1">Elemen Pembibitan Tanaman Perkebunan (Kelas XI ATP)</div>
+                        <p>Peserta didik mampu menerapkan teknik pembibitan tanaman perkebunan (kelapa sawit) mulai dari seleksi bahan tanam (kecambah), persiapan media dan naungan <i>Pre-Nursery</i>, pemeliharaan hingga seleksi bibit abnormal di <i>Main Nursery</i> sesuai standar operasional prosedur (SOP).</p>
+                    </div>
+                    <div class="bg-slate-800/90 p-3.5 rounded-2xl border border-amber-500/30">
+                        <div class="text-xs font-bold text-amber-300 uppercase mb-1">Tujuan Pembelajaran dalam Game:</div>
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li>Membedakan morfologi kecambah kelapa sawit normal dan abnormal.</li>
+                            <li>Menerapkan penyiraman, penyiangan gulma, dan naungan paranet pada fase <i>Pre-Nursery</i> (0–3 bulan).</li>
+                            <li>Melakukan pemupukan NPK, pengendalian bercak daun <i>Curvularia</i>, serta <i>culling</i> bibit abnormal pada fase <i>Main Nursery</i> (3–12 bulan).</li>
+                        </ul>
+                    </div>
+                `
+            },
+            guide: {
+                title: "🎮 Petunjuk Bermain & Mekanik Gamifikasi",
+                html: `
+                    <div class="space-y-2.5">
+                        <p><b>1. Navigasi Karakter:</b> Di laptop/PC cukup <b>klik langsung</b> pada tanah, Pak Budi, Meja Sortasi, atau Polybag. Bisa juga memakai tombol <b>WASD / Panah + Spasi</b>. Di HP/tablet gunakan tombol panah sentuh di layar.</p>
+                        <p><b>2. Ransel Alat (Inventory):</b> Pilih alat yang sesuai dengan indikator di atas polybag: 💧 <b>Gembor</b> (kering), 🌿 <b>Siang</b> (gulma), 🧪 <b>Pupuk</b> (kurang hara), 🧴 <b>Semprot</b> (bercak daun <i>Curvularia</i>), dan 🔍 <b>Afkir</b> (mencabut bibit kerdil/pucuk bengkok).</p>
+                        <p><b>3. Stamina & Waktu:</b> Bekerja mengurangi stamina. Kunjungi <b>Bak Tandon Air</b> (+25% Stamina) atau beristirahat berganti hari di <b>Gudang Saprotan</b> (+40% Stamina).</p>
+                    </div>
+                `
+            },
+            profile: {
+                title: "👨‍🏫 Identitas Media Pembelajaran Interaktif (MPI)",
+                html: `
+                    <div class="bg-slate-800/90 p-4 rounded-2xl border border-sky-500/30 space-y-2">
+                        <p><b>Judul Karya:</b> Petualangan Pembibitan Kelapa Sawit (<i>Oil Palm Nursery Adventure</i>)</p>
+                        <p><b>Subtema Lomba:</b> Gamifikasi & <i>Game-Based Learning</i> (GBL)</p>
+                        <p><b>Sasaran Pengguna:</b> Siswa SMK Kelas XI Program Keahlian Agribisnis Tanaman Perkebunan (ATP)</p>
+                        <p><b>Model Pedagogis:</b> Simulasi Kontekstual Berbasis Masalah (<i>Authentic Problem-Solving Simulation</i>) dengan Umpan Balik Konsekuensi Langsung & Rapor Kompetensi.</p>
+                    </div>
+                `
+            }
+        };
+
+        function openMPIModal(key) {
+            const data = MPI_SECTIONS[key];
+            if (!data) return;
+            document.getElementById('mpiModalTitle').textContent = data.title;
+            document.getElementById('mpiModalBody').innerHTML = data.html;
+            document.getElementById('mpiInfoModal').classList.remove('hidden');
+        }
+
+        function closeMPIModal() {
+            document.getElementById('mpiInfoModal').classList.add('hidden');
+        }
+
+        function downloadCertificate() {
+            const c = document.createElement('canvas');
+            c.width = 900;
+            c.height = 600;
+            const cx = c.getContext('2d');
+
+            // Latar sertifikat elegan
+            const grad = cx.createLinearGradient(0, 0, 900, 600);
+            grad.addColorStop(0, '#064e3b');
+            grad.addColorStop(1, '#0f172a');
+            cx.fillStyle = grad;
+            cx.fillRect(0, 0, 900, 600);
+
+            // Bingkai emas
+            cx.strokeStyle = '#fbbf24';
+            cx.lineWidth = 8;
+            cx.strokeRect(24, 24, 852, 552);
+            cx.strokeStyle = 'rgba(251, 191, 36, 0.45)';
+            cx.lineWidth = 2;
+            cx.strokeRect(38, 38, 824, 524);
+
+            cx.textAlign = 'center';
+            cx.fillStyle = '#fde68a';
+            cx.font = 'bold 18px sans-serif';
+            cx.fillText('MEDIA PEMBELAJARAN INTERAKTIF • AGRIBISNIS TANAMAN PERKEBUNAN', 450, 95);
+
+            cx.fillStyle = '#ffffff';
+            cx.font = 'bold 36px sans-serif';
+            cx.fillText('SERTIFIKAT KELULUSAN SIMULASI PKL', 450, 150);
+
+            cx.fillStyle = '#cbd5e1';
+            cx.font = '18px sans-serif';
+            cx.fillText('Diberikan kepada siswa praktik kerja lapangan:', 450, 210);
+
+            cx.fillStyle = '#34d399';
+            cx.font = 'bold 40px sans-serif';
+            cx.fillText(GameState.playerName.toUpperCase(), 450, 270);
+
+            cx.fillStyle = '#e2e8f0';
+            cx.font = '18px sans-serif';
+            cx.fillText('Telah menyelesaikan simulasi Pembibitan Kelapa Sawit (Pre-Nursery & Main Nursery)', 450, 325);
+            cx.fillText('dengan capaian Indeks Mutu Bibit Siap Salur:', 450, 355);
+
+            cx.fillStyle = '#fbbf24';
+            cx.font = 'bold 54px sans-serif';
+            cx.fillText(`${GameState.qualityScore}%`, 450, 425);
+
+            cx.fillStyle = '#94a3b8';
+            cx.font = 'italic 16px sans-serif';
+            cx.fillText('"Bibit unggul yang dirawat sesuai SOP adalah investasi panen 25 tahun ke depan."', 450, 485);
+
+            cx.fillStyle = '#cbd5e1';
+            cx.font = 'bold 15px sans-serif';
+            cx.fillText('Mandor Pembibitan: Pak Budi  •  SMK Kelas XI ATP', 450, 530);
+
+            const link = document.createElement('a');
+            link.download = `Sertifikat_PKL_Sawit_${GameState.playerName.replace(/\s+/g, '_')}.png`;
+            link.href = c.toDataURL('image/png');
+            link.click();
+            showFeedback('success', 'Sertifikat Diunduh!', 'File sertifikat PNG berhasil disimpan ke perangkatmu.');
+        }
+
+        /* =========================================================================
+           1. AUDIO ENGINE (SINTESIS WEB AUDIO API)
+           ========================================================================= */
+        const AudioEngine = {
+            ctx: null,
+            muted: false,
+            init() {
+                try {
+                    if (!this.ctx) {
+                        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                        if (AudioCtx) this.ctx = new AudioCtx();
+                    }
+                    if (this.ctx && this.ctx.state === 'suspended') {
+                        this.ctx.resume();
+                    }
+                } catch (err) {}
+            },
+            playTone(freq, type, duration, vol = 0.08) {
+                if (this.muted) return;
+                this.init();
+                if (!this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch (err) {}
+            },
+            sfxSuccess() {
+                this.playTone(523.25, 'triangle', 0.12);
+                setTimeout(() => this.playTone(659.25, 'triangle', 0.18), 90);
+            },
+            sfxError() {
+                this.playTone(190, 'sawtooth', 0.22, 0.08);
+            },
+            sfxWater() {
+                this.playTone(380, 'sine', 0.15, 0.06);
+                setTimeout(() => this.playTone(470, 'sine', 0.15, 0.06), 70);
+            },
+            sfxStep() {
+                this.playTone(135, 'sine', 0.04, 0.025);
+            }
+        };
+
+        function toggleAudio() {
+            AudioEngine.muted = !AudioEngine.muted;
+            document.getElementById('muteBtn').textContent = AudioEngine.muted ? '🔇' : '🔊';
+        }
+
+        /* =========================================================================
+           2. DATA KURIKULUM AGRIBISNIS TANAMAN PERKEBUNAN (KELAS XI)
+           ========================================================================= */
+        const SEED_SAMPLES = [
+            {
+                title: "Kecambah Varietas DxP #01",
+                visual: "🌱",
+                desc: "Radikula (calon akar) dan plumula (calon tunas) tumbuh lurus berlawanan arah (180°), berwarna putih gading segar dan bersih dari jamur.",
+                isNormal: true,
+                reason: "Kecambah normal memenuhi standar mutu! Siap ditanam di baby polybag dengan posisi radikula menghadap ke bawah."
+            },
+            {
+                title: "Kecambah Varietas DxP #02",
+                visual: "➰",
+                desc: "Radikula dan plumula tumbuh searah (melengkung sejajar/terpelintir) sehingga calon batang dan akar saling bertabrakan.",
+                isNormal: false,
+                reason: "Kecambah abnormal (radikula & plumula searah) akan tumbuh kerdil atau terbalik. Wajib diafkir sejak awal!"
+            },
+            {
+                title: "Kecambah Varietas DxP #03",
+                visual: "🦠",
+                desc: "Ujung radikula berwarna cokelat kehitaman, lunak, dan diselimuti miselium jamur akibat kelembapan berlebih.",
+                isNormal: false,
+                reason: "Kecambah terserang busuk jamur berisiko menulari media tanam di bedengan Pre-Nursery. Harus dimusnahkan!"
+            },
+            {
+                title: "Kecambah Varietas DxP #04",
+                visual: "🌿",
+                desc: "Plumula tegak kokoh, radikula memiliki bulu-bulu akar halus yang sehat, serta tidak ada bagian yang patah.",
+                isNormal: true,
+                reason: "Kecambah normal prima! Penanaman hati-hati mencegah patahnya titik tumbuh."
+            }
+        ];
+
+        const QUIZ_QUESTIONS = [
+            {
+                q: "Berapa lama fase Pre-Nursery berlangsung sebelum bibit kelapa sawit dipindahkan (transplanting) ke Main Nursery?",
+                options: [
+                    "1 bulan pertama saja",
+                    "3 bulan (hingga bibit berdaun 3–4 helai)",
+                    "12 bulan penuh di bawah paranet"
+                ],
+                answer: 1,
+                explanation: "Pre-Nursery berlangsung sekitar 3 bulan menggunakan baby polybag di bawah naungan paranet sebelum dipindah ke large polybag."
+            },
+            {
+                q: "Bagaimana jarak tanam standar polybag pada blok Main Nursery agar tajuk daun bibit tidak saling tumpang tindih?",
+                options: [
+                    "Segitiga sama sisi 90 × 90 × 90 cm",
+                    "Berhimpitan rapat 20 × 20 cm",
+                    "Persegi panjang 30 × 50 cm"
+                ],
+                answer: 0,
+                explanation: "Jarak tanam segitiga sama sisi 90 × 90 × 90 cm menjamin distribusi cahaya matahari merata untuk fotosintesis optimal."
+            },
+            {
+                q: "Mengapa seleksi bibit abnormal (culling) di pembibitan sangat menentukan keberhasilan perkebunan kelapa sawit?",
+                options: [
+                    "Agar menghemat pembelian polybag kosong",
+                    "Karena bibit abnormal yang terlanjur ditanam di lapangan akan memboroskan biaya selama 25 tahun tanpa menghasilkan TBS optimal",
+                    "Supaya tinggi seluruh bibit sama persis saat difoto"
+                ],
+                answer: 1,
+                explanation: "Kelapa sawit adalah tanaman tahunan berumur ekonomis ±25 tahun. Bibit afkir yang lolos tanam akan merugikan kebun dalam jangka panjang."
+            }
+        ];
+
+        /* =========================================================================
+           3. STATE UTAMA GAME (GAYA HARVEST MOON FARMING RPG)
+           ========================================================================= */
+        const GameState = {
+            playerName: "Siswa ATP",
+            chapter: 1,
+            month: 0,
+            day: 1,
+            timeMinutes: 7 * 60 + 30,
+            weather: 'cerah',
+            stamina: 100,
+            qualityScore: 100,
+            selectedTool: 'water',
+            dialogOpen: false,
+            modalOpen: false,
+            seedIndex: 0,
+            seedCorrectCount: 0,
+            quizIndex: 0,
+            player: {
+                x: 210,
+                y: 280,
+                targetX: null,
+                targetY: null,
+                autoInteractTarget: null,
+                speed: 225,
+                dir: 'down',
+                stepTimer: 0,
+                walkFrame: 0
+            },
+            mandor: {
+                x: 155,
+                y: 175,
+                hasQuest: true
+            },
+            polybags: [],
+            particles: []
+        };
+
+        /* =========================================================================
+           4. INISIALISASI KANVAS & KONTROL INPUT
+           ========================================================================= */
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = Math.max(320, Math.floor(rect.width));
+            canvas.height = Math.max(320, Math.floor(rect.height));
+            if (GameState.chapter === 2 || GameState.chapter === 3) {
+                layoutPolybags();
+            }
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        const Keys = { up: false, down: false, left: false, right: false };
+
+        function cancelAutoMove() {
+            GameState.player.targetX = null;
+            GameState.player.targetY = null;
+            GameState.player.autoInteractTarget = null;
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (GameState.dialogOpen || GameState.modalOpen) return;
+            const k = e.key.toLowerCase();
+            if (k === 'w' || e.key === 'ArrowUp') { Keys.up = true; cancelAutoMove(); }
+            if (k === 's' || e.key === 'ArrowDown') { Keys.down = true; cancelAutoMove(); }
+            if (k === 'a' || e.key === 'ArrowLeft') { Keys.left = true; cancelAutoMove(); }
+            if (k === 'd' || e.key === 'ArrowRight') { Keys.right = true; cancelAutoMove(); }
+            if (e.code === 'Space' || e.key === 'Enter') {
+                e.preventDefault();
+                triggerAction();
+            }
+            if (k === '1') selectTool('water');
+            if (k === '2') selectTool('weed');
+            if (k === '3') selectTool('fertilizer');
+            if (k === '4') selectTool('spray');
+            if (k === '5') selectTool('inspect');
+        });
+
+        window.addEventListener('keyup', (e) => {
+            const k = e.key.toLowerCase();
+            if (k === 'w' || e.key === 'ArrowUp') Keys.up = false;
+            if (k === 's' || e.key === 'ArrowDown') Keys.down = false;
+            if (k === 'a' || e.key === 'ArrowLeft') Keys.left = false;
+            if (k === 'd' || e.key === 'ArrowRight') Keys.right = false;
+        });
+
+        function bindTouchBtn(id, dirKey) {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            const start = (e) => { e.preventDefault(); Keys[dirKey] = true; cancelAutoMove(); };
+            const end = (e) => { e.preventDefault(); Keys[dirKey] = false; };
+            btn.addEventListener('touchstart', start, { passive: false });
+            btn.addEventListener('touchend', end, { passive: false });
+            btn.addEventListener('mousedown', start);
+            btn.addEventListener('mouseup', end);
+            btn.addEventListener('mouseleave', end);
+        }
+        bindTouchBtn('btnUp', 'up');
+        bindTouchBtn('btnDown', 'down');
+        bindTouchBtn('btnLeft', 'left');
+        bindTouchBtn('btnRight', 'right');
+
+        // Klik mouse langsung pada kanvas
+        canvas.addEventListener('click', (e) => {
+            if (GameState.dialogOpen || GameState.modalOpen) return;
+            AudioEngine.init();
+
+            const rect = canvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
+
+            const clickedObj = getInteractiveObjectAt(mx, my);
+            if (clickedObj) {
+                const dist = Math.hypot(GameState.player.x - clickedObj.x, GameState.player.y - clickedObj.y);
+                if (dist < 76) {
+                    cancelAutoMove();
+                    if (clickedObj.kind === 'polybag') {
+                        handlePolybagInteraction(clickedObj.ref);
+                    } else {
+                        executeWorldObjectInteraction(clickedObj.kind);
+                    }
+                } else {
+                    GameState.player.targetX = clickedObj.x;
+                    GameState.player.targetY = clickedObj.y;
+                    GameState.player.autoInteractTarget = clickedObj;
+                }
+            } else {
+                GameState.player.targetX = Math.max(35, Math.min(canvas.width - 35, mx));
+                GameState.player.targetY = Math.max(60, Math.min(canvas.height - 95, my));
+                GameState.player.autoInteractTarget = null;
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (GameState.dialogOpen || GameState.modalOpen) return;
+            const rect = canvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
+            canvas.style.cursor = getInteractiveObjectAt(mx, my) ? 'pointer' : 'default';
+        });
+
+        function getWorldZones() {
+            const w = canvas.width;
+            const h = canvas.height;
+            return {
+                saung: { x: 35, y: 45, w: 150, h: 92 },
+                well: { x: Math.max(210, w - 160), y: 45, w: 125, h: 85 },
+                warehouse: { x: 35, y: Math.max(280, h - 185), w: 150, h: 90 },
+                sortTable: { x: Math.max(240, w * 0.43), y: Math.max(165, h * 0.36), w: 160, h: 84 }
+            };
+        }
+
+        function getInteractiveObjectAt(mx, my) {
+            const zones = getWorldZones();
+            if (Math.hypot(mx - GameState.mandor.x, my - GameState.mandor.y) < 38) {
+                return { kind: 'mandor', x: GameState.mandor.x, y: GameState.mandor.y };
+            }
+            if (mx >= zones.well.x && mx <= zones.well.x + zones.well.w && my >= zones.well.y && my <= zones.well.y + zones.well.h) {
+                return { kind: 'waterWell', x: zones.well.x + zones.well.w / 2, y: zones.well.y + zones.well.h + 12 };
+            }
+            if (mx >= zones.warehouse.x && mx <= zones.warehouse.x + zones.warehouse.w && my >= zones.warehouse.y && my <= zones.warehouse.y + zones.warehouse.h) {
+                return { kind: 'warehouse', x: zones.warehouse.x + zones.warehouse.w / 2, y: zones.warehouse.y - 12 };
+            }
+            if (GameState.chapter === 1) {
+                const t = zones.sortTable;
+                if (mx >= t.x && mx <= t.x + t.w && my >= t.y && my <= t.y + t.h) {
+                    return { kind: 'table', x: t.x + t.w / 2, y: t.y + t.h / 2 };
+                }
+            }
+            if (GameState.chapter === 2 || GameState.chapter === 3) {
+                for (const pb of GameState.polybags) {
+                    if (pb.culled) continue;
+                    const hitR = pb.isMainNursery ? 30 : 24;
+                    if (Math.hypot(mx - pb.x, my - pb.y) < hitR) {
+                        return { kind: 'polybag', x: pb.x, y: pb.y, ref: pb };
+                    }
+                }
+            }
+            return null;
+        }
+
+        /* =========================================================================
+           5. ALUR BABAK & MISI PEMBIBITAN
+           ========================================================================= */
+        function startGame() {
+            const inputName = document.getElementById('playerNameInput').value.trim();
+            if (inputName) GameState.playerName = inputName;
+
+            AudioEngine.init();
+            AudioEngine.sfxSuccess();
+
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameHUD').classList.remove('hidden');
+            document.getElementById('questBanner').classList.remove('hidden');
+            document.getElementById('mobileControls').classList.remove('hidden');
+
+            resizeCanvas();
+            setupChapter(1);
+            requestAnimationFrame(gameLoop);
+        }
+
+        function setupChapter(chap) {
+            GameState.chapter = chap;
+            GameState.polybags = [];
+            updateHUD();
+
+            if (chap === 1) {
+                GameState.month = 0;
+                updateQuest("Klik Pak Budi atau Meja Sortasi Kecambah untuk menyortir 4 sampel kecambah DxP.", "0/4");
+                openMandorDialog(
+                    `Halo <b>${GameState.playerName}</b>! Selamat datang di pembibitan kita. Langkah pertama keberhasilan kebun sawit adalah <b>Seleksi Kecambah</b>. Klik <b>Meja Sortasi Kecambah</b> atau bicara lagi denganku untuk memulai penyortiran!`
+                );
+            } else if (chap === 2) {
+                GameState.month = 1;
+                document.getElementById('toolSelector').classList.remove('hidden');
+                document.getElementById('tool-spray').classList.add('hidden');
+                document.getElementById('tool-inspect').classList.add('hidden');
+                selectTool('water');
+                createPolybags(6, false);
+                updateQuest("Pre-Nursery (Bulan 1–3): Siram polybag kering (💧) & siangi gulma (🌿) di bawah paranet.", "0/6");
+                openMandorDialog(
+                    `Kecambah unggul sudah ditanam ke <i>baby polybag</i> di bawah <b>naungan paranet</b>. Sekarang tugasmu merawat blok <b>Pre-Nursery</b>: gunakan <b>Gembor Siram</b> pada polybag kering dan <b>Siang Gulma</b> pada polybag berumput. Setelah selesai, lapor padaku!`
+                );
+            } else if (chap === 3) {
+                GameState.month = 6;
+                document.getElementById('toolSelector').classList.remove('hidden');
+                document.getElementById('tool-spray').classList.remove('hidden');
+                document.getElementById('tool-inspect').classList.remove('hidden');
+                selectTool('fertilizer');
+                createPolybags(8, true);
+                updateQuest("Main Nursery (Bulan 6): Pupuk NPK (🧪), semprot bercak daun (🧴) & afkir bibit abnormal (🔍).", "0/8");
+                openMandorDialog(
+                    `Bibit sudah dipindah ke <i>large polybag</i> jarak tanam <b>90×90×90 cm</b>! Di blok <b>Main Nursery</b> ini, berikan <b>Pupuk NPK (🧪)</b> pada bibit kurang hara, gunakan <b>Semprot Fungisida (🧴)</b> untuk mengobati bercak daun <i>Curvularia</i> (🍄), dan gunakan alat <b>Afkir (🔍)</b> khusus untuk mencabut bibit kerdil/pucuk bengkok (⚠️)!`
+                );
+            } else if (chap === 4) {
+                GameState.month = 12;
+                document.getElementById('toolSelector').classList.add('hidden');
+                updateQuest("Bibit berumur 12 bulan! Temui Pak Budi untuk Uji Kelayakan Bibit Siap Salur.", "Siap Salur");
+                openMandorDialog(
+                    `Luar biasa, <b>${GameState.playerName}</b>! Bibit kita sudah berumur <b>12 bulan</b> dan siap dipindahkan ke kebun lapangan. Jawab 3 pertanyaan evaluasi akhir dari saya untuk mendapatkan Sertifikat Kelulusan PKL!`,
+                    `<button type="button" onclick="closeDialog(); openQuizModal();" class="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-sm">Mulai Uji Kelayakan ➔</button>`
+                );
+            }
+        }
+
+        function createPolybags(count, isMainNursery) {
+            GameState.polybags = [];
+            for (let i = 0; i < count; i++) {
+                let state = {
+                    id: i,
+                    x: 0,
+                    y: 0,
+                    isMainNursery,
+                    needsWater: false,
+                    hasWeed: false,
+                    needsFert: false,
+                    hasFungus: false,
+                    abnormalType: null,
+                    culled: false
+                };
+
+                if (!isMainNursery) {
+                    if (i % 2 === 0) state.needsWater = true;
+                    else state.hasWeed = true;
+                } else {
+                    if (i === 2) state.abnormalType = "Kerdil (Stunted)";
+                    else if (i === 5) state.abnormalType = "Pucuk Bengkok (Twisted)";
+                    else if (i === 1 || i === 6) state.hasFungus = true;
+                    else if (i % 2 === 0) state.needsFert = true;
+                    else state.needsWater = true;
+                }
+                GameState.polybags.push(state);
+            }
+            layoutPolybags();
+        }
+
+        function layoutPolybags() {
+            const cols = GameState.chapter === 2 ? 3 : 4;
+            const startX = Math.max(230, canvas.width * 0.36);
+            const startY = Math.max(175, canvas.height * 0.36);
+            const gapX = Math.min(88, (canvas.width - startX - 45) / cols);
+            const gapY = 88;
+
+            GameState.polybags.forEach((pb, idx) => {
+                const r = Math.floor(idx / cols);
+                const c = idx % cols;
+                const stagger = (pb.isMainNursery && r % 2 === 1) ? gapX * 0.45 : 0;
+                pb.x = startX + c * gapX + stagger;
+                pb.y = startY + r * gapY;
+            });
+        }
+
+        function updateNurseryProgress() {
+            let remaining = 0;
+            GameState.polybags.forEach(pb => {
+                if (pb.culled) return;
+                if (pb.abnormalType) remaining++;
+                else if (pb.needsWater || pb.hasWeed || pb.needsFert || pb.hasFungus) remaining++;
+            });
+            const total = GameState.polybags.length;
+            const done = total - remaining;
+            updateQuest(
+                remaining === 0
+                    ? "Semua perawatan selesai! Klik Pak Budi untuk melapor."
+                    : (GameState.chapter === 2
+                        ? "Siram polybag kering (💧) & siangi gulma (🌿) di blok Pre-Nursery."
+                        : "Pupuk NPK (🧪), semprot bercak daun (🧴) & afkir bibit abnormal (🔍)."),
+                `${done}/${total}`
+            );
+            return remaining;
+        }
+
+        /* =========================================================================
+           6. DIALOG, SELEKSI KECAMBAH & KUIS KOMPETENSI
+           ========================================================================= */
+        function openMandorDialog(htmlText, customButtonsHtml = null) {
+            GameState.dialogOpen = true;
+            document.getElementById('dialogText').innerHTML = htmlText;
+            const actionsDiv = document.getElementById('dialogActions');
+            if (customButtonsHtml) {
+                actionsDiv.innerHTML = customButtonsHtml;
+            } else {
+                actionsDiv.innerHTML = `<button type="button" onclick="closeDialog()" class="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm">Siap Laksanakan, Pak!</button>`;
+            }
+            document.getElementById('dialogModal').classList.remove('hidden');
+        }
+
+        function closeDialog() {
+            GameState.dialogOpen = false;
+            document.getElementById('dialogModal').classList.add('hidden');
+        }
+
+        function openSeedSortModal() {
+            GameState.modalOpen = true;
+            GameState.seedIndex = 0;
+            GameState.seedCorrectCount = 0;
+            renderSeedSample();
+            document.getElementById('seedSortModal').classList.remove('hidden');
+        }
+
+        function renderSeedSample() {
+            const sample = SEED_SAMPLES[GameState.seedIndex];
+            document.getElementById('seedCounter').textContent = `Sampel ${GameState.seedIndex + 1} / ${SEED_SAMPLES.length}`;
+            document.getElementById('seedVisual').textContent = sample.visual;
+            document.getElementById('seedTitle').textContent = sample.title;
+            document.getElementById('seedDesc').textContent = sample.desc;
+        }
+
+        function judgeSeed(playerChoseNormal) {
+            const sample = SEED_SAMPLES[GameState.seedIndex];
+            const isCorrect = (playerChoseNormal === sample.isNormal);
+
+            if (isCorrect) {
+                GameState.seedCorrectCount++;
+                AudioEngine.sfxSuccess();
+                showFeedback('success', 'Analisis Morfologi Tepat!', sample.reason);
+            } else {
+                modifyQuality(-6);
+                AudioEngine.sfxError();
+                showFeedback('error', 'Keliru Menilai Kecambah (-6% Mutu)', sample.reason);
+            }
+
+            GameState.seedIndex++;
+            updateQuest("Seleksi kecambah DxP di Meja Sortasi.", `${GameState.seedIndex}/${SEED_SAMPLES.length}`);
+
+            if (GameState.seedIndex < SEED_SAMPLES.length) {
+                renderSeedSample();
+            } else {
+                document.getElementById('seedSortModal').classList.add('hidden');
+                GameState.modalOpen = false;
+                openMandorDialog(
+                    `Penyortiran selesai! Kamu berhasil menilai <b>${GameState.seedCorrectCount} dari ${SEED_SAMPLES.length}</b> sampel kecambah dengan tepat. Sekarang kita masuk ke tahap <b>Pre-Nursery (Bulan ke-1)</b>!`,
+                    `<button type="button" onclick="closeDialog(); setupChapter(2);" class="px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm">Lanjut ke Pre-Nursery ➔</button>`
+                );
+            }
+        }
+
+        function openQuizModal() {
+            GameState.modalOpen = true;
+            GameState.quizIndex = 0;
+            renderQuizQuestion();
+            document.getElementById('quizModal').classList.remove('hidden');
+        }
+
+        function renderQuizQuestion() {
+            const item = QUIZ_QUESTIONS[GameState.quizIndex];
+            document.getElementById('quizProgress').textContent = `Soal ${GameState.quizIndex + 1}/${QUIZ_QUESTIONS.length}`;
+            document.getElementById('quizQuestion').textContent = item.q;
+
+            const optsDiv = document.getElementById('quizOptions');
+            optsDiv.innerHTML = '';
+            item.options.forEach((optText, idx) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = "w-full text-left p-3.5 rounded-xl bg-slate-800 hover:bg-emerald-900/60 border border-slate-600 hover:border-emerald-400 text-xs sm:text-sm font-semibold text-white transition";
+                btn.textContent = `${String.fromCharCode(65 + idx)}. ${optText}`;
+                btn.onclick = () => submitQuizAnswer(idx);
+                optsDiv.appendChild(btn);
+            });
+        }
+
+        function submitQuizAnswer(chosenIdx) {
+            const item = QUIZ_QUESTIONS[GameState.quizIndex];
+            if (chosenIdx === item.answer) {
+                AudioEngine.sfxSuccess();
+                showFeedback('success', 'Jawaban Benar!', item.explanation);
+            } else {
+                modifyQuality(-7);
+                AudioEngine.sfxError();
+                showFeedback('error', 'Kurang Tepat (-7% Mutu)', item.explanation);
+            }
+
+            GameState.quizIndex++;
+            if (GameState.quizIndex < QUIZ_QUESTIONS.length) {
+                renderQuizQuestion();
+            } else {
+                document.getElementById('quizModal').classList.add('hidden');
+                GameState.modalOpen = false;
+                showFinalCertificate();
+            }
+        }
+
+        function showFinalCertificate() {
+            const score = GameState.qualityScore;
+            document.getElementById('resultStudentName').textContent = `Nama Siswa: ${GameState.playerName} • Kelas XI ATP`;
+            document.getElementById('resultScore').textContent = `${score}%`;
+
+            let title = "Agronom Muda Teladan!";
+            let msg = "Luar biasa! Kamu menguasai SOP seleksi kecambah, pemeliharaan Pre-Nursery, hingga seleksi ketat di Main Nursery. Bibit ini siap memberikan panen optimal selama 25 tahun!";
+            if (score < 85 && score >= 70) {
+                title = "Asisten Pembibitan Terampil";
+                msg = "Bagus! Sebagian besar bibit tumbuh sehat dan memenuhi standar salur, meski masih ada beberapa catatan ketelitian pemupukan dan penyiraman.";
+            } else if (score < 70) {
+                title = "Perlu Pendalaman SOP Pembibitan";
+                msg = "Terus berlatih! Ingat bahwa kesalahan kecil pada dosis pupuk atau kelalaian membuang bibit abnormal dapat menurunkan produktivitas kebun selama 25 tahun.";
+            }
+
+            document.getElementById('resultTitle').textContent = title;
+            document.getElementById('resultFeedback').textContent = msg;
+            document.getElementById('resultModal').classList.remove('hidden');
+        }
+
+        /* =========================================================================
+           7. UTILITAS HUD, FEEDBACK, STAMINA & PILIHAN ALAT
+           ========================================================================= */
+        function selectTool(toolName) {
+            GameState.selectedTool = toolName;
+            document.querySelectorAll('.tool-btn').forEach(btn => {
+                btn.classList.remove('bg-sky-600', 'bg-emerald-600', 'bg-amber-600', 'bg-rose-600', 'text-white', 'border-white');
+                btn.classList.add('bg-slate-800', 'text-slate-300', 'border-transparent');
+            });
+
+            const activeBtn = document.getElementById(`tool-${toolName}`);
+            if (activeBtn) {
+                const colorMap = {
+                    water: 'bg-sky-600',
+                    weed: 'bg-emerald-600',
+                    fertilizer: 'bg-amber-600',
+                    spray: 'bg-purple-600',
+                    inspect: 'bg-rose-600'
+                };
+                activeBtn.classList.remove('bg-slate-800', 'text-slate-300', 'border-transparent');
+                activeBtn.classList.add(colorMap[toolName], 'text-white', 'border-white');
+            }
+        }
+
+        function modifyQuality(delta) {
+            GameState.qualityScore = Math.max(0, Math.min(100, GameState.qualityScore + delta));
+            const bar = document.getElementById('hudQualityBar');
+            const text = document.getElementById('hudQualityText');
+            text.textContent = `${GameState.qualityScore}%`;
+            bar.style.width = `${GameState.qualityScore}%`;
+            if (GameState.qualityScore < 60) {
+                bar.className = "h-full bg-rose-500 transition-all duration-300";
+                text.className = "text-rose-400";
+            } else if (GameState.qualityScore < 85) {
+                bar.className = "h-full bg-amber-400 transition-all duration-300";
+                text.className = "text-amber-300";
+            }
+        }
+
+        function modifyStamina(delta) {
+            GameState.stamina = Math.max(10, Math.min(100, GameState.stamina + delta));
+            updateHUD();
+        }
+
+        function updateHUD() {
+            const stageNames = {
+                1: "Babak 1: Seleksi Kecambah",
+                2: "Babak 2: Pre-Nursery",
+                3: "Babak 3: Main Nursery",
+                4: "Babak 4: Evaluasi Panen"
+            };
+            document.getElementById('hudStage').textContent = stageNames[GameState.chapter];
+            document.getElementById('hudMonth').textContent = `Bulan ke-${GameState.month}`;
+
+            const hrs = Math.floor(GameState.timeMinutes / 60) % 24;
+            const mins = Math.floor(GameState.timeMinutes % 60);
+            const period = hrs < 11 ? "Pagi" : (hrs < 15 ? "Siang" : "Sore");
+            document.getElementById('hudTimeText').textContent = `Hari ke-${GameState.day} • ${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')} ${period}`;
+            document.getElementById('hudWeatherIcon').textContent = GameState.weather === 'gerimis' ? '🌦️' : '☀️';
+
+            document.getElementById('hudStaminaText').textContent = `${Math.round(GameState.stamina)}%`;
+            document.getElementById('hudStaminaBar').style.width = `${GameState.stamina}%`;
+        }
+
+        function updateQuest(text, badge) {
+            document.getElementById('questText').textContent = text;
+            document.getElementById('questProgressBadge').textContent = badge;
+        }
+
+        let toastTimer = null;
+        function showFeedback(type, title, msg) {
+            const toast = document.getElementById('feedbackToast');
+            const icon = document.getElementById('toastIcon');
+            const titleEl = document.getElementById('toastTitle');
+            const msgEl = document.getElementById('toastMsg');
+
+            toast.classList.remove('hidden', 'border-emerald-400', 'border-rose-500', 'border-amber-400');
+            titleEl.classList.remove('text-emerald-300', 'text-rose-400', 'text-amber-300');
+
+            if (type === 'success') {
+                toast.classList.add('border-emerald-400');
+                titleEl.classList.add('text-emerald-300');
+                icon.textContent = '✅';
+            } else if (type === 'error') {
+                toast.classList.add('border-rose-500');
+                titleEl.classList.add('text-rose-400');
+                icon.textContent = '⚠️';
+            } else {
+                toast.classList.add('border-amber-400');
+                titleEl.classList.add('text-amber-300');
+                icon.textContent = '💡';
+            }
+
+            titleEl.textContent = title;
+            msgEl.textContent = msg;
+
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3800);
+        }
+
+        function toggleSOPModal(show) {
+            GameState.modalOpen = show;
+            const modal = document.getElementById('sopModal');
+            if (show) modal.classList.remove('hidden');
+            else modal.classList.add('hidden');
+        }
+
+        /* =========================================================================
+           8. INTERAKSI OBJEK DI DUNIA GAME
+           ========================================================================= */
+        function executeWorldObjectInteraction(kind) {
+            if (kind === 'waterWell') {
+                modifyStamina(+25);
+                AudioEngine.sfxWater();
+                showFeedback('success', 'Bak Tandon Air Irigasi', 'Gembor siram terisi penuh & cuci muka menyegarkan stamina (+25% Stamina)!');
+                return;
+            }
+            if (kind === 'warehouse') {
+                modifyStamina(+40);
+                GameState.day += 1;
+                GameState.timeMinutes = 7 * 60 + 30;
+                GameState.weather = (GameState.day % 2 === 0) ? 'gerimis' : 'cerah';
+                AudioEngine.sfxSuccess();
+                updateHUD();
+                showFeedback('info', 'Istirahat di Gudang Saprotan', `Memasuki Hari ke-${GameState.day} pukul 07:30 Pagi! Stamina pulih (+40%) dan stok pupuk siap digunakan.`);
+                return;
+            }
+            if (kind === 'table' && GameState.chapter === 1) {
+                AudioEngine.sfxSuccess();
+                openSeedSortModal();
+                return;
+            }
+            if (kind === 'mandor') {
+                AudioEngine.sfxSuccess();
+                if (GameState.chapter === 1) {
+                    openSeedSortModal();
+                } else if (GameState.chapter === 2 || GameState.chapter === 3) {
+                    const rem = updateNurseryProgress();
+                    if (rem === 0) {
+                        const nextChap = GameState.chapter + 1;
+                        openMandorDialog(
+                            `Kerja bagus, <b>${GameState.playerName}</b>! Semua bibit di blok ini sehat dan terawat sesuai SOP. Mari kita lanjut ke tahap berikutnya!`,
+                            `<button type="button" onclick="closeDialog(); setupChapter(${nextChap});" class="px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm">Lanjut ke Babak ${nextChap} ➔</button>`
+                        );
+                    } else {
+                        openMandorDialog(
+                            `Masih ada <b>${rem} tugas perawatan/seleksi</b> yang belum selesai di petak polybag. Jika stamina lelah, kamu bisa beristirahat di <b>Gudang Saprotan</b> atau menyegarkan diri di <b>Bak Tandon Air</b>!`
+                        );
+                    }
+                } else if (GameState.chapter === 4) {
+                    openQuizModal();
+                }
+            }
+        }
+
+        function triggerAction() {
+            if (GameState.dialogOpen || GameState.modalOpen) return;
+
+            const p = GameState.player;
+            const m = GameState.mandor;
+            const zones = getWorldZones();
+
+            if (Math.hypot(p.x - m.x, p.y - m.y) < 76) {
+                executeWorldObjectInteraction('mandor');
+                return;
+            }
+            if (Math.hypot(p.x - (zones.well.x + zones.well.w / 2), p.y - (zones.well.y + zones.well.h / 2)) < 90) {
+                executeWorldObjectInteraction('waterWell');
+                return;
+            }
+            if (Math.hypot(p.x - (zones.warehouse.x + zones.warehouse.w / 2), p.y - (zones.warehouse.y + zones.warehouse.h / 2)) < 94) {
+                executeWorldObjectInteraction('warehouse');
+                return;
+            }
+            if (GameState.chapter === 1) {
+                const tx = zones.sortTable.x + zones.sortTable.w / 2;
+                const ty = zones.sortTable.y + zones.sortTable.h / 2;
+                if (Math.hypot(p.x - tx, p.y - ty) < 102) {
+                    executeWorldObjectInteraction('table');
+                    return;
+                }
+            }
+            if (GameState.chapter === 2 || GameState.chapter === 3) {
+                let nearest = null;
+                let minDist = 72;
+                GameState.polybags.forEach(pb => {
+                    if (pb.culled) return;
+                    const d = Math.hypot(p.x - pb.x, p.y - pb.y);
+                    if (d < minDist) {
+                        minDist = d;
+                        nearest = pb;
+                    }
+                });
+                if (nearest) {
+                    handlePolybagInteraction(nearest);
+                    return;
+                }
+            }
+
+            showFeedback('info', 'Jelajahi Kebun Pembibitan', 'Klik langsung Pak Budi, Meja Sortasi, Bak Tandon Air, Gudang Saprotan, atau Polybag bibit sawit!');
+        }
+
+        function spawnSplashParticles(x, y, color) {
+            for (let i = 0; i < 10; i++) {
+                const angle = (Math.PI * 2 * i) / 10;
+                GameState.particles.push({
+                    x, y,
+                    vx: Math.cos(angle) * (40 + Math.random() * 50),
+                    vy: Math.sin(angle) * (40 + Math.random() * 50) - 20,
+                    life: 0.45,
+                    color
+                });
+            }
+        }
+
+        function handlePolybagInteraction(pb) {
+            const tool = GameState.selectedTool;
+            modifyStamina(-4);
+            GameState.timeMinutes += 15;
+            updateHUD();
+
+            if (tool === 'inspect') {
+                if (pb.abnormalType) {
+                    pb.culled = true;
+                    spawnSplashParticles(pb.x, pb.y, '#facc15');
+                    AudioEngine.sfxSuccess();
+                    showFeedback('success', 'Culling Berhasil!', `Bibit gejala ${pb.abnormalType} telah dicabut & dimusnahkan sesuai SOP.`);
+                    updateNurseryProgress();
+                } else {
+                    AudioEngine.sfxError();
+                    modifyQuality(-5);
+                    showFeedback('error', 'Salah Cabut (-5% Mutu)', 'Bibit ini normal dan sehat! Jangan mencabut bibit unggul.');
+                }
+                return;
+            }
+
+            if (pb.abnormalType) {
+                AudioEngine.sfxError();
+                modifyQuality(-5);
+                showFeedback('error', 'Bibit Abnormal Terdeteksi!', `Bibit ini mengalami ${pb.abnormalType}. Ganti ke alat Afkir (🔍) untuk mencabutnya!`);
+                return;
+            }
+
+            if (tool === 'spray') {
+                if (pb.hasFungus) {
+                    pb.hasFungus = false;
+                    spawnSplashParticles(pb.x, pb.y, '#c084fc');
+                    AudioEngine.sfxWater();
+                    showFeedback('success', 'Pengendalian Curvularia Berhasil!', 'Penyemprotan fungisida kontak menghentikan penyebaran bercak daun.');
+                } else {
+                    AudioEngine.sfxError();
+                    modifyQuality(-4);
+                    showFeedback('error', 'Penyemprotan Tidak Perlu (-4% Mutu)', 'Bibit ini tidak terserang jamur! Hindari penggunaan pestisida tanpa gejala.');
+                }
+            } else if (pb.hasFungus) {
+                AudioEngine.sfxError();
+                modifyQuality(-4);
+                showFeedback('error', 'Terinfeksi Bercak Daun Curvularia!', 'Gunakan alat Semprot Fungisida (🧴) terlebih dahulu untuk mengobati daun yang terinfeksi!');
+            } else if (tool === 'water') {
+                if (pb.needsWater) {
+                    pb.needsWater = false;
+                    spawnSplashParticles(pb.x, pb.y, '#38bdf8');
+                    AudioEngine.sfxWater();
+                    showFeedback('success', 'Penyiraman Gembor Tepat!', 'Kelembapan tanah polybag terjaga optimal.');
+                } else {
+                    AudioEngine.sfxError();
+                    modifyQuality(-4);
+                    showFeedback('error', 'Over-watering (-4% Mutu)', 'Media polybag sudah cukup lembap! Penyiraman berlebih memicu busuk akar.');
+                }
+            } else if (tool === 'weed') {
+                if (pb.hasWeed) {
+                    pb.hasWeed = false;
+                    spawnSplashParticles(pb.x, pb.y, '#4ade80');
+                    AudioEngine.sfxSuccess();
+                    showFeedback('success', 'Penyiangan Gulma Bersih!', 'Gulma dicabut manual agar tidak merebut unsur hara NPK.');
+                } else {
+                    AudioEngine.sfxError();
+                    showFeedback('info', 'Polybag Sudah Bersih', 'Tidak ada gulma liar di polybag ini.');
+                }
+            } else if (tool === 'fertilizer') {
+                if (pb.needsFert) {
+                    pb.needsFert = false;
+                    spawnSplashParticles(pb.x, pb.y, '#fb923c');
+                    AudioEngine.sfxSuccess();
+                    showFeedback('success', 'Pemupukan NPK Sesuai Dosis!', 'Pupuk majemuk ditabur melingkar ±5 cm dari pangkal batang.');
+                } else {
+                    AudioEngine.sfxError();
+                    modifyQuality(-8);
+                    showFeedback('error', 'Overdosis Pupuk (-8% Mutu)', 'Bibit ini sudah dipupuk! Kelebihan pupuk menyebabkan daun terbakar.');
+                }
+            }
+
+            updateNurseryProgress();
+        }
+
+        /* =========================================================================
+           9. GAME LOOP & RENDERING VISUAL 2D TOP-DOWN (GAYA HARVEST MOON)
+           ========================================================================= */
+        let lastTime = 0;
+        let hudClockAccum = 0;
+
+        function drawRoundedBox(x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+        }
+
+        function gameLoop(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            const dt = Math.min(0.05, (timestamp - lastTime) / 1000);
+            lastTime = timestamp;
+
+            update(dt);
+            render();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function update(dt) {
+            if (GameState.dialogOpen || GameState.modalOpen) return;
+
+            hudClockAccum += dt;
+            if (hudClockAccum >= 2.0) {
+                GameState.timeMinutes += 5;
+                if (GameState.timeMinutes >= 17 * 60) {
+                    GameState.day += 1;
+                    GameState.timeMinutes = 7 * 60 + 30;
+                    GameState.weather = (GameState.day % 2 === 0) ? 'gerimis' : 'cerah';
+                    showFeedback('info', `Hari ke-${GameState.day} Dimulai!`, 'Matahari pagi terbit di kebun pembibitan kelapa sawit.');
+                }
+                updateHUD();
+                hudClockAccum = 0;
+            }
+
+            for (let i = GameState.particles.length - 1; i >= 0; i--) {
+                const pt = GameState.particles[i];
+                pt.x += pt.vx * dt;
+                pt.y += pt.vy * dt;
+                pt.life -= dt;
+                if (pt.life <= 0) GameState.particles.splice(i, 1);
+            }
+
+            const p = GameState.player;
+            let dx = 0;
+            let dy = 0;
+
+            if (Keys.up) { dy -= 1; p.dir = 'up'; }
+            if (Keys.down) { dy += 1; p.dir = 'down'; }
+            if (Keys.left) { dx -= 1; p.dir = 'left'; }
+            if (Keys.right) { dx += 1; p.dir = 'right'; }
+
+            if (dx === 0 && dy === 0 && p.targetX !== null && p.targetY !== null) {
+                const distToTarget = Math.hypot(p.targetX - p.x, p.targetY - p.y);
+                const stopRadius = p.autoInteractTarget ? 54 : 6;
+
+                if (distToTarget > stopRadius) {
+                    dx = (p.targetX - p.x) / distToTarget;
+                    dy = (p.targetY - p.y) / distToTarget;
+                } else {
+                    const targetObj = p.autoInteractTarget;
+                    cancelAutoMove();
+                    if (targetObj) {
+                        if (targetObj.kind === 'polybag' && !targetObj.ref.culled) {
+                            handlePolybagInteraction(targetObj.ref);
+                        } else {
+                            executeWorldObjectInteraction(targetObj.kind);
+                        }
+                    }
+                }
+            }
+
+            if (dx !== 0 || dy !== 0) {
+                const len = Math.hypot(dx, dy);
+                dx /= len;
+                dy /= len;
+
+                p.x += dx * p.speed * dt;
+                p.y += dy * p.speed * dt;
+                p.walkFrame += dt * 10;
+
+                p.x = Math.max(35, Math.min(canvas.width - 35, p.x));
+                p.y = Math.max(60, Math.min(canvas.height - 95, p.y));
+
+                p.stepTimer += dt;
+                if (p.stepTimer > 0.28) {
+                    AudioEngine.sfxStep();
+                    p.stepTimer = 0;
+                }
+            } else {
+                p.walkFrame = 0;
+            }
+
+            const actionLabel = document.getElementById('actionBtnLabel');
+            const zones = getWorldZones();
+            const distMandor = Math.hypot(p.x - GameState.mandor.x, p.y - GameState.mandor.y);
+            const distWell = Math.hypot(p.x - (zones.well.x + zones.well.w / 2), p.y - (zones.well.y + zones.well.h / 2));
+            const distWh = Math.hypot(p.x - (zones.warehouse.x + zones.warehouse.w / 2), p.y - (zones.warehouse.y + zones.warehouse.h / 2));
+
+            if (distMandor < 76) {
+                actionLabel.textContent = "Bicara Pak Budi";
+            } else if (distWell < 90) {
+                actionLabel.textContent = "Isi Gembor & Segarkan";
+            } else if (distWh < 94) {
+                actionLabel.textContent = "Istirahat di Gudang";
+            } else {
+                const toolLabels = {
+                    water: "Siram Gembor",
+                    weed: "Siangi Gulma",
+                    fertilizer: "Tabur Pupuk",
+                    spray: "Semprot Fungisida",
+                    inspect: "Periksa/Afkir"
+                };
+                actionLabel.textContent = (GameState.chapter === 2 || GameState.chapter === 3)
+                    ? toolLabels[GameState.selectedTool]
+                    : "Interaksi";
+            }
+        }
+
+        function render() {
+            const w = canvas.width;
+            const h = canvas.height;
+            const zones = getWorldZones();
+
+            // 1. Latar Rumput Hijau Hangat Ala Harvest Moon
+            ctx.fillStyle = '#4d7c0f';
+            ctx.fillRect(0, 0, w, h);
+
+            ctx.fillStyle = '#65a30d';
+            for (let gx = 0; gx < w; gx += 64) {
+                for (let gy = 0; gy < h; gy += 64) {
+                    if ((gx + gy) % 128 === 0) {
+                        ctx.fillRect(gx + 6, gy + 6, 52, 52);
+                    }
+                }
+            }
+
+            // Jalan setapak tanah cokelat
+            ctx.fillStyle = '#a16207';
+            ctx.fillRect(100, 130, Math.max(100, w - 240), 26);
+            ctx.fillRect(100, 130, 26, Math.max(100, h - 260));
+
+            // Pagar kayu kebun
+            ctx.fillStyle = '#78350f';
+            ctx.fillRect(0, 0, w, 16);
+            ctx.fillRect(0, h - 16, w, 16);
+            for (let fx = 12; fx < w; fx += 36) {
+                ctx.fillStyle = '#b45309';
+                ctx.fillRect(fx, 2, 10, 18);
+            }
+
+            // 2. Bangunan Kebun
+            drawBuilding(zones.saung.x, zones.saung.y, zones.saung.w, zones.saung.h, '#92400e', '#d97706', '🛖 Saung Mandor');
+            drawBuilding(zones.well.x, zones.well.y, zones.well.w, zones.well.h, '#0369a1', '#38bdf8', '💧 Bak Tandon Air');
+            drawBuilding(zones.warehouse.x, zones.warehouse.y, zones.warehouse.w, zones.warehouse.h, '#7f1d1d', '#f59e0b', '🏚️ Gudang Saprotan');
+
+            // Indikator titik tujuan klik mouse
+            if (GameState.player.targetX !== null && GameState.player.targetY !== null) {
+                ctx.strokeStyle = 'rgba(254, 240, 138, 0.85)';
+                ctx.lineWidth = 2.5;
+                ctx.beginPath();
+                ctx.arc(GameState.player.targetX, GameState.player.targetY, 12, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            // 3. Zona Kerja (Meja Sortasi atau Bedengan Polybag)
+            if (GameState.chapter === 1) {
+                const t = zones.sortTable;
+                ctx.fillStyle = '#78350f';
+                drawRoundedBox(t.x, t.y, t.w, t.h, 14);
+                ctx.fill();
+                ctx.strokeStyle = '#fbbf24';
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+
+                ctx.fillStyle = '#fef3c7';
+                ctx.font = 'bold 12px "Plus Jakarta Sans"';
+                ctx.textAlign = 'center';
+                ctx.fillText('🌱 Meja Sortasi Kecambah', t.x + t.w / 2, t.y + 46);
+            } else if ((GameState.chapter === 2 || GameState.chapter === 3) && GameState.polybags.length > 0) {
+                const p0 = GameState.polybags[0];
+                const bedW = Math.min(360, w - (p0.x - 45) - 20);
+                ctx.fillStyle = '#713f12';
+                drawRoundedBox(p0.x - 42, p0.y - 42, bedW, 205, 16);
+                ctx.fill();
+                ctx.strokeStyle = '#a16207';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+
+            // 4. Gambar Polybag
+            GameState.polybags.forEach(pb => {
+                if (pb.culled) return;
+                drawPolybag(pb);
+            });
+
+            // 5. Naungan Paranet Pre-Nursery
+            if (GameState.chapter === 2 && GameState.polybags.length > 0) {
+                const startX = GameState.polybags[0].x - 45;
+                const startY = GameState.polybags[0].y - 45;
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.22)';
+                ctx.strokeStyle = 'rgba(226, 232, 240, 0.65)';
+                ctx.lineWidth = 2;
+                drawRoundedBox(startX, startY, Math.min(365, w - startX - 20), 210, 16);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = '#fef08a';
+                ctx.font = 'bold 11px "Plus Jakarta Sans"';
+                ctx.textAlign = 'left';
+                ctx.fillText('☂️ Naungan Paranet 50% (Pre-Nursery)', startX + 10, startY - 8);
+            }
+
+            // 6. Karakter Mandor & Pemain
+            drawCharacter(GameState.mandor.x, GameState.mandor.y, '#d97706', '#fef3c7', 'Pak Budi', true, 0, 'down');
+            drawCharacter(GameState.player.x, GameState.player.y, '#0284c7', '#fde047', GameState.playerName, false, GameState.player.walkFrame, GameState.player.dir);
+
+            // 7. Partikel Percikan
+            GameState.particles.forEach(pt => {
+                ctx.fillStyle = pt.color;
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // 8. Efek Cuaca Gerimis
+            if (GameState.weather === 'gerimis') {
+                ctx.strokeStyle = 'rgba(186, 230, 253, 0.35)';
+                ctx.lineWidth = 1.5;
+                const t = performance.now() * 0.35;
+                for (let i = 0; i < 35; i++) {
+                    const rx = ((i * 97 + t * 0.4) % w);
+                    const ry = ((i * 53 + t) % h);
+                    ctx.beginPath();
+                    ctx.moveTo(rx, ry);
+                    ctx.lineTo(rx - 4, ry + 12);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        function drawBuilding(x, y, w, h, wallColor, roofColor, title) {
+            ctx.fillStyle = 'rgba(0,0,0,0.28)';
+            drawRoundedBox(x + 6, y + 8, w, h, 14);
+            ctx.fill();
+
+            ctx.fillStyle = wallColor;
+            drawRoundedBox(x, y + 22, w, h - 22, 12);
+            ctx.fill();
+
+            ctx.fillStyle = roofColor;
+            drawRoundedBox(x - 4, y, w + 8, 34, 12);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 11px "Plus Jakarta Sans"';
+            ctx.textAlign = 'center';
+            ctx.fillText(title, x + w / 2, y + h - 14);
+        }
+
+        function drawPolybag(pb) {
+            const radius = pb.isMainNursery ? 22 : 16;
+
+            ctx.fillStyle = 'rgba(0,0,0,0.28)';
+            ctx.beginPath();
+            ctx.ellipse(pb.x, pb.y + radius * 0.75, radius, radius * 0.45, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#1e293b';
+            ctx.beginPath();
+            ctx.arc(pb.x, pb.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.fillStyle = pb.needsWater ? '#d97706' : '#57534e';
+            ctx.beginPath();
+            ctx.arc(pb.x, pb.y, radius - 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            const leafColor = pb.abnormalType ? '#eab308' : '#22c55e';
+            ctx.strokeStyle = leafColor;
+            ctx.lineWidth = pb.isMainNursery ? 3.5 : 2.5;
+            const frondLen = pb.abnormalType ? radius * 0.65 : (pb.isMainNursery ? radius * 1.15 : radius * 0.85);
+
+            for (let a = 0; a < 5; a++) {
+                const angle = (a * Math.PI * 2) / 5 - Math.PI / 2;
+                ctx.beginPath();
+                ctx.moveTo(pb.x, pb.y);
+                ctx.lineTo(pb.x + Math.cos(angle) * frondLen, pb.y + Math.sin(angle) * frondLen);
+                ctx.stroke();
+            }
+
+            if (pb.hasWeed) {
+                ctx.fillStyle = '#a3e635';
+                ctx.beginPath();
+                ctx.arc(pb.x - 8, pb.y + 6, 4.5, 0, Math.PI * 2);
+                ctx.arc(pb.x + 8, pb.y + 5, 4.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            let badge = null;
+            if (pb.abnormalType) badge = '⚠️';
+            else if (pb.hasFungus) badge = '🍄';
+            else if (pb.needsWater) badge = '💧';
+            else if (pb.hasWeed) badge = '🌿';
+            else if (pb.needsFert) badge = '🧪';
+
+            if (badge) {
+                ctx.font = '14px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(badge, pb.x, pb.y - radius - 6);
+            }
+        }
+
+        function drawCharacter(x, y, shirtColor, hatColor, label, isMandor, walkFrame = 0, dir = 'down') {
+            const isWalking = walkFrame > 0;
+            const bob = isWalking ? Math.abs(Math.sin(walkFrame)) * 2.5 : 0;
+            const legSwing = isWalking ? Math.sin(walkFrame) * 4.5 : 0;
+            const armSwing = isWalking ? -Math.sin(walkFrame) * 4 : 0;
+
+            ctx.save();
+            ctx.translate(x, y);
+
+            // 1. Bayangan realistis di permukaan tanah
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.32)';
+            ctx.beginPath();
+            ctx.ellipse(0, 22, 13, 5.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 2. Sepatu Boot Perkebunan & Celana Kerja
+            const pantsColor = isMandor ? '#334155' : '#1e3a8a';
+            const bootColor = isMandor ? '#1c1917' : '#78350f';
+
+            // Kaki Kiri
+            ctx.fillStyle = pantsColor;
+            drawRoundedBox(-7, 6 + legSwing * 0.4, 5.5, 11, 2);
+            ctx.fill();
+            ctx.fillStyle = bootColor;
+            drawRoundedBox(-7.5, 15 + legSwing * 0.4, 6.5, 6, 2.5);
+            ctx.fill();
+
+            // Kaki Kanan
+            ctx.fillStyle = pantsColor;
+            drawRoundedBox(1.5, 6 - legSwing * 0.4, 5.5, 11, 2);
+            ctx.fill();
+            ctx.fillStyle = bootColor;
+            drawRoundedBox(1, 15 - legSwing * 0.4, 6.5, 6, 2.5);
+            ctx.fill();
+
+            // 3. Badan / Seragam Lapangan (Torso)
+            ctx.fillStyle = shirtColor;
+            drawRoundedBox(-9.5, -9 - bob, 19, 17, 5);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(15, 23, 42, 0.45)';
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
+
+            // Detail kerah & saku seragam lapangan
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+            ctx.fillRect(-1.5, -8 - bob, 3, 14); // Garis kancing baju
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
+            ctx.strokeRect(2.5, -4 - bob, 4.5, 4.5); // Saku dada
+
+            // 4. Lengan Kiri & Kanan dengan animasi ayunan
+            const skinColor = '#f1c27d';
+            // Lengan kiri
+            ctx.fillStyle = shirtColor;
+            drawRoundedBox(-13.5, -7.5 - bob - armSwing * 0.5, 4.5, 10, 2.2);
+            ctx.fill();
+            ctx.fillStyle = skinColor;
+            ctx.beginPath();
+            ctx.arc(-11.2, 3 - bob - armSwing * 0.5, 2.4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Lengan kanan
+            ctx.fillStyle = shirtColor;
+            drawRoundedBox(9, -7.5 - bob + armSwing * 0.5, 4.5, 10, 2.2);
+            ctx.fill();
+            ctx.fillStyle = skinColor;
+            ctx.beginPath();
+            ctx.arc(11.2, 3 - bob + armSwing * 0.5, 2.4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 5. Leher & Kepala Manusia
+            ctx.fillStyle = '#e0ac69';
+            ctx.fillRect(-3, -12 - bob, 6, 4);
+
+            ctx.fillStyle = skinColor;
+            ctx.beginPath();
+            ctx.arc(0, -18 - bob, 8.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#9a6b38';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Rambut & Fitur Wajah (menyesuaikan arah hadap)
+            if (dir !== 'up') {
+                const eyeOffsetX = dir === 'left' ? -2.5 : (dir === 'right' ? 2.5 : 0);
+                // Alis & Mata
+                ctx.fillStyle = '#1e293b';
+                ctx.beginPath();
+                ctx.arc(-3 + eyeOffsetX, -18 - bob, 1.3, 0, Math.PI * 2);
+                ctx.arc(3 + eyeOffsetX, -18 - bob, 1.3, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Kumis tipis untuk Pak Budi Mandor
+                if (isMandor) {
+                    ctx.fillStyle = '#334155';
+                    drawRoundedBox(-3.5 + eyeOffsetX, -15.2 - bob, 7, 1.8, 1);
+                    ctx.fill();
+                } else {
+                    // Senyum ramah siswa PKL
+                    ctx.strokeStyle = '#9a3412';
+                    ctx.lineWidth = 1.2;
+                    ctx.beginPath();
+                    ctx.arc(eyeOffsetX, -15.5 - bob, 2.3, 0.15 * Math.PI, 0.85 * Math.PI);
+                    ctx.stroke();
+                }
+            } else {
+                // Rambut bagian belakang saat menghadap ke atas
+                ctx.fillStyle = isMandor ? '#475569' : '#1e293b';
+                ctx.beginPath();
+                ctx.arc(0, -18.5 - bob, 8.2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // 6. Penutup Kepala (Topi Caping Bambu untuk Mandor / Helm Safety Kuning untuk Siswa PKL)
+            if (isMandor) {
+                // Topi Caping Bambu / Topi Lebar Kebun
+                ctx.fillStyle = '#d97706';
+                ctx.beginPath();
+                ctx.ellipse(0, -23.5 - bob, 14, 4.5, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#78350f';
+                ctx.lineWidth = 1.2;
+                ctx.stroke();
+
+                ctx.fillStyle = '#f59e0b';
+                ctx.beginPath();
+                ctx.moveTo(-11, -23.5 - bob);
+                ctx.lineTo(0, -31 - bob);
+                ctx.lineTo(11, -23.5 - bob);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+            } else {
+                // Helm Safety Perkebunan (Kuning)
+                ctx.fillStyle = hatColor;
+                ctx.beginPath();
+                ctx.arc(0, -21.5 - bob, 9.2, Math.PI, 0);
+                ctx.fill();
+                ctx.strokeStyle = '#a16207';
+                ctx.lineWidth = 1.2;
+                ctx.stroke();
+
+                // Lidah / Visor Helm
+                ctx.fillStyle = '#eab308';
+                drawRoundedBox(-9.5, -22.5 - bob, 19, 2.8, 1.4);
+                ctx.fill();
+            }
+
+            // 7. Label Nama dengan Latar Pill Semi-Transparan agar Mudah Dibaca
+            ctx.font = 'bold 11px "Plus Jakarta Sans"';
+            const textW = ctx.measureText(label).width + 12;
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
+            drawRoundedBox(-textW / 2, -47 - bob, textW, 15, 6);
+            ctx.fill();
+
+            ctx.textAlign = 'center';
+            ctx.fillStyle = isMandor ? '#fde68a' : '#ffffff';
+            ctx.fillText(label, 0, -36 - bob);
+
+            // Ikon Tanda Seru Misi di atas Pak Budi
+            if (isMandor && GameState.mandor.hasQuest) {
+                ctx.font = 'bold 14px sans-serif';
+                ctx.fillStyle = '#facc15';
+                ctx.fillText('❗', 0, -52 - bob);
+            }
+
+            ctx.restore();
+        }
+    </script>
+</body>
+</html>
